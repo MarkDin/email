@@ -155,7 +155,7 @@ class EmailRelationshipAnalyzer:
                     continue
                 
                 # 构建关系键
-                key = f"{sender}.{subject}.{recipient_domain}"
+                key = f"{sender}#{subject}#{recipient_domain}"
                 
                 # 构建关系值
                 username = extract_username(recipient)
@@ -205,26 +205,46 @@ class EmailRelationshipAnalyzer:
         # 断言：域名不应该为空
         assert reply_domain, f"提取的域名为空: {replier}"
         
-        # 从原始邮件中获取发件人
-        original_sender = self.original_emails[subject][0]['发件人']
-        
-        # 构建关系键
-        key = f"{original_sender}.{subject}.{reply_domain}"
-        
-        # 构建关系值
+        # 获取回复者用户名
         username = extract_username(replier)
         
         # 断言：用户名不应该为空
         assert username, f"提取的用户名为空: {replier}"
         
-        value = (original_sender, subject, username)
+        # 找到对应的原始邮件
+        original_email = None
+        for email in self.original_emails[subject]:
+            # 检查收件人是否包含回复者
+            if '收件人' in email and pd.notna(email['收件人']):
+                recipients = str(email['收件人']).split(',')
+                if any(replier in recipient.strip() for recipient in recipients):
+                    original_email = email
+                    break
         
-        # 添加到关系集合
-        if key not in self.relationships:
-            self.relationships[key] = []
-        
-        if value not in self.relationships[key]:
-            self.relationships[key].append(value)
+        # 如果找到对应的原始邮件，创建关系
+        if original_email:
+            original_sender = original_email['发件人']
+            
+            # 构建关系键
+            key = f"{original_sender}#{subject}#{reply_domain}"
+            
+            # 构建关系值
+            value = (original_sender, subject, username)
+            
+            # 添加到关系集合
+            if key not in self.relationships:
+                self.relationships[key] = []
+            
+            if value not in self.relationships[key]:
+                self.relationships[key].append(value)
+        else:
+            # 如果找不到对应的原始邮件，记录错误
+            self.unknown_data["processing_errors"].append({
+                "message_id": reply['邮件消息标识'],
+                "error": "找不到对应的原始邮件",
+                "subject": subject,
+                "replier": replier
+            })
 
     def process_pending_replies(self):
         """处理所有暂存的回复邮件"""

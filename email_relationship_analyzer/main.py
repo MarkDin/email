@@ -21,7 +21,7 @@ def main():
         
         # 保存结果
         analyzer.save_relationships(output_file)
-        analyzer.save_errors(error_file)
+        analyzer.save_unknown_data(error_file)
         
         logger.info("处理完成!")
         
@@ -29,7 +29,7 @@ def main():
         logger.error(f"处理过程中发生错误: {str(e)}")
         # 如果分析器已经初始化，尝试保存已收集的错误
         if 'analyzer' in locals():
-            analyzer.save_errors(error_file)
+            analyzer.save_unknown_data(error_file)
 
 if __name__ == "__main__":
     main() 
