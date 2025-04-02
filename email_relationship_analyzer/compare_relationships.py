@@ -27,6 +27,7 @@ def process_excel_data(excel_file):
         
         # 按topic_group_id分组
         grouped_data = {}
+        res = {}
         for _, row in df.iterrows():
             topic_group_id = row['topic_group_id']
             if pd.notna(topic_group_id):  # 确保topic_group_id不为空
@@ -45,10 +46,10 @@ def process_excel_data(excel_file):
             grouped_data[topic_group_id].sort()
             # grouped_data[topic_group_id] = '#'.join(grouped_data[topic_group_id])
             key = '#'.join(grouped_data[topic_group_id])
-            grouped_data[key] = 1
+            res[key] = topic_group_id
             # print(grouped_data[topic_group_id])
         
-        return grouped_data
+        return res
     except Exception as e:
         logger.error(f"处理Excel文件时出错: {str(e)}")
         raise
@@ -56,6 +57,7 @@ def process_excel_data(excel_file):
 def process_json_data(json_data):
     """处理JSON数据，生成唯一标识"""
     processed_data = {}
+    res = {}
     for key, value in json_data.items():
         # if value['count'] > 4:
         #     continue
@@ -64,8 +66,8 @@ def process_json_data(json_data):
         # 排序并拼接
         message_tags.sort()
         new_key = '#'.join(message_tags)
-        processed_data[new_key] = 1
-    return processed_data
+        res[new_key] = key
+    return res
 
 def compare_relationships(excel_data, json_data):
     """比较两个数据源的关系集合"""
@@ -79,29 +81,22 @@ def compare_relationships(excel_data, json_data):
     processed_json = process_json_data(json_data)
     
     # 比较每个topic_group_id
-    for topic_group_id, excel_sequence in excel_data.items():
+    for excel_sequence, v in excel_data.items():
         # 检查是否在JSON中存在
-        if topic_group_id not in processed_json:
+        if excel_sequence not in processed_json:
             mismatches["missing_in_json"].append({
-                "topic_group_id": topic_group_id,
-                "excel_sequence": excel_sequence
+                "excel_sequence": excel_sequence,
+                "topic_group_id": v
             })
             continue
         
-        # 比较序列是否一致
-        if excel_sequence != processed_json[topic_group_id]:
-            mismatches["different_sequences"].append({
-                "topic_group_id": topic_group_id,
-                "excel_sequence": excel_sequence,
-                "json_sequence": processed_json[topic_group_id]
-            })
     
     # 检查JSON中是否有Excel中找不到的关系
-    for topic_group_id, json_sequence in processed_json.items():
-        if topic_group_id not in excel_data:
+    for json_sequence, v in processed_json.items():
+        if json_sequence not in excel_data:
             mismatches["missing_in_excel"].append({
-                "topic_group_id": topic_group_id,
-                "json_sequence": json_sequence
+                "json_sequence": json_sequence,
+                "key": v
             })
     
     return mismatches
@@ -132,10 +127,10 @@ def main():
         logger.info("比较结果统计:")
         logger.info(f"- Excel中找不到的关系: {len(mismatches['missing_in_excel'])}")
         logger.info(f"- JSON中找不到的关系: {len(mismatches['missing_in_json'])}")
-        logger.info(f"- 邮件顺序不一致的关系: {len(mismatches['different_sequences'])}")
         
         # 保存不匹配的结果
-        save_mismatches(mismatches, 'mismatches.json')
+        save_mismatches(mismatches['missing_in_excel'], 'missing_in_excel.json')
+        save_mismatches(mismatches['missing_in_json'], 'missing_in_json.json')
         
     except Exception as e:
         logger.error(f"程序执行出错: {str(e)}")
