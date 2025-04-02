@@ -168,7 +168,7 @@ class EmailRelationshipAnalyzer:
                     })
                     continue
                 
-                value = (sender, subject, username)
+                value = (sender, subject, username, original_email['邮件消息标识'])
                 
                 # 添加到关系集合
                 if key not in self.relationships:
@@ -229,7 +229,7 @@ class EmailRelationshipAnalyzer:
             key = f"{original_sender}#{subject}#{reply_domain}"
             
             # 构建关系值
-            value = (original_sender, subject, username)
+            value = (original_sender, subject, username, reply['邮件消息标识'])
             
             # 添加到关系集合
             if key not in self.relationships:
