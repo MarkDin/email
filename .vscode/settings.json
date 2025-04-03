@@ -1,0 +1,14 @@
+{
+    // 禁用JSON文件的语法验证
+    "json.validate.enable": false,
+    // 禁用JSON文件的格式化
+    "[json]": {
+        "editor.formatOnSave": false,
+        "editor.formatOnPaste": false,
+        "editor.formatOnType": false
+    },
+    // 将JSON文件作为纯文本处理
+    "files.associations": {
+        "*.json": "plaintext"
+    }
+}

@@ -42,7 +42,8 @@ class RelationshipValidator:
         Returns:
             bool: 是否符合规则
         """
-        sender, subject, recipient, message_id = item
+        print(item)
+        sender, subject, recipient, message_id, send_time = item
         
         # 在搜索结果中查找匹配的行
         for result in search_results:
