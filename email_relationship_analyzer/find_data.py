@@ -2,6 +2,7 @@
 import json
 
 
+# 行号：555
 def find_title_contain_reply(filepath: str, keyword: str, count: int):
     with open(filepath, 'r', encoding='utf-8') as f:
         data = json.load(f) 
@@ -20,6 +21,10 @@ def find_title_contain_reply(filepath: str, keyword: str, count: int):
         if cnt >= count:
             break
             
-
+def get_has_grouped_row_count(filepath):
+    with open(filepath, 'r', encoding='utf-8') as f:
+        data = json.load(f) 
+    total = 0 
+    
 if __name__ == '__main__':
     find_title_contain_reply('relationships.json', '回复', 2)
