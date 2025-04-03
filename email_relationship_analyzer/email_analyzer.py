@@ -54,15 +54,18 @@ class EmailRelationshipAnalyzer:
             # 过滤掉没有邮件消息标识的行
             missing_ids = chunk[chunk['邮件消息标识'].isna()]
             if not missing_ids.empty:
-                logger.warning(f"发现 {len(missing_ids)} 行缺少邮件消息标识，这些行将被忽略")
-                # 记录被忽略的行
+                logger.warning(f"发现 {len(missing_ids)} 行缺少邮件消息标识，使用行号作为替代")
+                # 为缺少邮件消息标识的行添加行号作为标识
                 for idx, row in missing_ids.iterrows():
                     subject_info = row['邮件名称'] if pd.notna(row['邮件名称']) else "未知主题"
+                    # 记录到unknown_data中
                     self.unknown_data["empty_data"].append({
                         "row_index": idx,
                         "subject": subject_info,
-                        "error": "缺少邮件消息标识"
+                        "error": "缺少邮件消息标识，使用行号替代"
                     })
+                    # 使用行号作为邮件消息标识
+                    chunk.loc[idx, '邮件消息标识'] = f"ROW_{idx}"
                 
                 # 过滤保留有邮件消息标识的行
                 chunk = chunk[chunk['邮件消息标识'].notna()]
@@ -168,7 +171,7 @@ class EmailRelationshipAnalyzer:
                     })
                     continue
                 
-                value = (sender, subject, username, original_email['邮件消息标识'])
+                value = (sender, subject, username, original_email['邮件消息标识'], original_email['发送时间'])
                 
                 # 添加到关系集合
                 if key not in self.relationships:
@@ -229,7 +232,7 @@ class EmailRelationshipAnalyzer:
             key = f"{original_sender}#{subject}#{reply_domain}"
             
             # 构建关系值
-            value = (original_sender, subject, username, reply['邮件消息标识'])
+            value = (original_sender, subject, username, reply['邮件消息标识'], reply['发送时间'])
             
             # 添加到关系集合
             if key not in self.relationships:
